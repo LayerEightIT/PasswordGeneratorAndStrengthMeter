@@ -51,7 +51,7 @@
           <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
           <div class="meta" id="strengthDesc" aria-live="polite">
             <div><span class="score-label" id="scoreLabel">—</span></div>
-            <div id="entropyLabel">Entropy: — bits</div>
+            <div id="entropyLabel">Entropy: 0 bits</div>
             <div id="crackLabel">Crack time: —</div>
           </div>
         </div>
@@ -91,12 +91,6 @@
 </main>
 
 <script>
-/* Password tool script
-   - Lazy loads zxcvbn from CDN
-   - Falls back to entropy estimate if zxcvbn unavailable
-   - Uses crypto.getRandomValues for secure randomness
-*/
-
 const pwInput = document.getElementById('pw');
 const meterBar = document.getElementById('meterBar');
 const scoreLabel = document.getElementById('scoreLabel');
@@ -116,7 +110,6 @@ let lastGenerated = '';
 
 const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js';
 
-// Lazy load zxcvbn when user focuses or types
 function loadZxcvbn(){
   if(zxcvbnLoaded || zxcvbnLoading) return;
   zxcvbnLoading = true;
@@ -128,15 +121,12 @@ function loadZxcvbn(){
   document.head.appendChild(s);
 }
 
-// Utility: secure random integer in [0, n)
 function secureRandomInt(n){
-  const max = 4294967296; // 2^32
   const arr = new Uint32Array(1);
-  window.crypto.getRandomValues(arr);
-  return Math.floor((arr[0] / max) * n);
+  crypto.getRandomValues(arr);
+  return Math.floor((arr[0] / 2**32) * n);
 }
 
-// Generator
 function buildCharset(opts){
   const sets = {
     lower: 'abcdefghijklmnopqrstuvwxyz',
@@ -177,14 +167,11 @@ function generatePassword(){
   return out;
 }
 
-// Entropy fallback
 function entropyBits(password, charsetSize){
   if(!password) return 0;
-  // Conservative estimate: bits = length * log2(charsetSize)
   return password.length * Math.log2(charsetSize || 1);
 }
 
-// Human readable time
 function humanTime(seconds){
   if(!isFinite(seconds) || seconds <= 0) return 'Instant';
   const units = [
@@ -203,51 +190,64 @@ function humanTime(seconds){
   return 'less than a second';
 }
 
-// Evaluate password
 function evaluatePassword(){
   const pw = pwInput.value || '';
+
+  if (!pw) {
+    updateUI(-1, 0, 0);
+    engineLabel.textContent = zxcvbnLoaded ? 'zxcvbn' : 'entropy fallback';
+    return;
+  }
+
   if(zxcvbnLoaded && typeof window.zxcvbn === 'function'){
     try{
       const res = window.zxcvbn(pw);
-      const score = res.score; // 0-4
-      const guesses = res.guesses || Math.pow(2, entropyBits(pw, 94));
-      const entropy = res.entropy || entropyBits(pw, 94);
+      const score = res.score;
+      const guesses = res.guesses;
+      const entropy = res.entropy;
       updateUI(score, entropy, guesses);
       engineLabel.textContent = 'zxcvbn';
       return;
-    }catch(e){
-      // fall through to fallback
-    }
+    }catch(e){}
   }
-  // Fallback: estimate charset size from character classes present
+
   let charsetSize = 0;
   if(/[a-z]/.test(pw)) charsetSize += 26;
   if(/[A-Z]/.test(pw)) charsetSize += 26;
   if(/[0-9]/.test(pw)) charsetSize += 10;
-  if(/[^A-Za-z0-9]/.test(pw)) charsetSize += 32; // approximate symbols
+  if(/[^A-Za-z0-9]/.test(pw)) charsetSize += 32;
+
   if(charsetSize === 0) charsetSize = 1;
+
   const bits = entropyBits(pw, charsetSize);
-  // rough guesses per second: 10 billion (online/offline vary widely)
   const guesses = Math.pow(2, bits);
   const score = bits < 28 ? 0 : bits < 36 ? 1 : bits < 60 ? 2 : bits < 80 ? 3 : 4;
+
   updateUI(score, bits, guesses);
   engineLabel.textContent = 'entropy fallback';
 }
 
 function updateUI(score, bits, guesses){
-  const pct = ((score+1)/5) * 100;
+  if (score < 0) {
+    meterBar.style.width = '0%';
+    scoreLabel.textContent = '—';
+    entropyLabel.textContent = 'Entropy: 0 bits';
+    crackLabel.textContent = 'Crack time: —';
+    return;
+  }
+
+  const pct = ((score + 1) / 5) * 100;
   meterBar.style.width = pct + '%';
-  // color via CSS gradient; label mapping
+
   const labels = ['Very weak','Weak','Fair','Strong','Excellent'];
   scoreLabel.textContent = labels[Math.max(0, Math.min(4, score))];
   entropyLabel.textContent = 'Entropy: ' + Math.round(bits) + ' bits';
-  // guesses to seconds: assume 1e10 guesses/sec for offline GPU cracking estimate (conservative)
+
   const guessesPerSec = 1e10;
   const seconds = guesses / guessesPerSec;
   crackLabel.textContent = 'Crack time: ' + humanTime(seconds);
 }
 
-// UI wiring
 pwInput.addEventListener('input', () => { evaluatePassword(); loadZxcvbn(); });
 pwInput.addEventListener('focus', loadZxcvbn);
 lengthRange.addEventListener('input', () => { lenVal.textContent = lengthRange.value; });
@@ -261,19 +261,10 @@ generateBtn.addEventListener('click', () => {
 });
 
 regenBtn.addEventListener('click', () => {
-  if(lastGenerated){
-    // regenerate with same options
-    const pw = generatePassword();
-    if(pw){
-      pwInput.value = pw;
-      evaluatePassword();
-    }
-  } else {
-    const pw = generatePassword();
-    if(pw){
-      pwInput.value = pw;
-      evaluatePassword();
-    }
+  const pw = generatePassword();
+  if(pw){
+    pwInput.value = pw;
+    evaluatePassword();
   }
 });
 
@@ -293,17 +284,11 @@ toggleShow.addEventListener('click', () => {
   const isShown = toggleShow.getAttribute('aria-pressed') === 'true';
   toggleShow.setAttribute('aria-pressed', String(!isShown));
   toggleShow.textContent = isShown ? 'Show' : 'Hide';
-  if(isShown){
-    pwInput.type = 'text';
-  } else {
-    pwInput.type = 'text'; // keep text type so generated strings are visible; if you prefer masked, set to 'password'
-  }
+  pwInput.type = 'text';
 });
 
-// initial evaluate
 evaluatePassword();
 
-// Accessibility: keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g'){
     e.preventDefault();
