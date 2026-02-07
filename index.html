@@ -3,21 +3,73 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Password Generator and Strength Meter</title>
+<title>LayerEightIT — Password Generator & Strength Meter</title>
 <style>
   :root{
-    --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4;
-    --danger:#ef4444; --warn:#f59e0b; --good:#10b981; --glass: rgba(255,255,255,0.03);
+    --bg-1: #0b1028;        /* deep navy */
+    --bg-2: #1b0b3b;        /* dark purple */
+    --card:#0a1220;
+    --muted:#cbd5e1;
+    --accent:#7c3aed;       /* purple accent */
+    --accent-2:#0ea5a4;     /* teal accent */
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --good:#10b981;
+    --glass: rgba(255,255,255,0.03);
+    --brand:#8b5cf6;
+    --text:#ffffff;
   }
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:linear-gradient(180deg,#071022 0%,#071a2a 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;max-width:920px;width:100%;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+
+  html,body{height:100%;margin:0}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    background:linear-gradient(180deg,var(--bg-2) 0%, var(--bg-1) 100%);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+  }
+
+  .wrap{max-width:980px;width:100%}
+
+  header.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .logo{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+    color:inherit;
+  }
+  .logo-mark{
+    width:44px;height:44px;border-radius:8px;
+    background:linear-gradient(135deg,var(--brand),var(--accent));
+    display:inline-flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    font-weight:800;color:#02121a;font-size:18px;
+  }
+  .brand-title{font-size:18px;font-weight:700}
+  .brand-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px;padding:18px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  }
+
   .grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
-  .full{grid-column:1/-1}
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
   .pw-row{display:flex;gap:8px;align-items:center}
-  input[type="text"], input[type="password"]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:15px}
-  button, .btn{background:var(--accent);color:#042027;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
-  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+  input[type="text"]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:var(--text);font-size:15px}
+  button, .btn{background:var(--accent);color:#02121a;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
   .meter{height:12px;border-radius:8px;background:rgba(255,255,255,0.04);overflow:hidden}
   .meter > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--good));transition:width .25s ease}
   .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:13px}
@@ -26,70 +78,91 @@
   .small{font-size:13px;color:var(--muted)}
   .toggle{display:flex;gap:8px;align-items:center}
   input[type="checkbox"]{width:18px;height:18px}
-  .score-label{font-weight:700}
+  .score-label{font-weight:800;color:var(--text)}
   .tips{margin-top:12px;color:var(--muted);font-size:13px}
-  .footer{margin-top:12px;color:var(--muted);font-size:12px}
-  @media (max-width:880px){.grid{grid-template-columns:1fr;}}
+  .footer{margin-top:12px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .return-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:700}
+  .engine-pill{font-size:12px;color:var(--muted);padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.01)}
+  .brand-accent{color:var(--brand);font-weight:700}
 </style>
 </head>
 <body>
-<main class="card" aria-labelledby="title">
-  <h2 id="title">Password Generator and Strength Meter</h2>
-  <p class="small">Everything runs in your browser. Nothing is sent to any server.</p>
-
-  <div class="grid" role="region" aria-label="Password tool">
-    <section>
-      <div class="full">
-        <label for="pw">Password</label>
-        <div class="pw-row">
-          <input id="pw" type="text" inputmode="text" aria-describedby="strengthDesc" autocomplete="off" placeholder="Type or generate a password" />
-          <button id="toggleShow" class="btn-ghost" aria-pressed="false" title="Show or hide password">Show</button>
-          <button id="copyBtn" class="btn" title="Copy password">Copy</button>
+  <div class="wrap">
+    <header class="brand">
+      <a class="logo" href="https://LayerEightIT.com/" target="_blank" rel="noopener noreferrer">
+        <span class="logo-mark" aria-hidden="true">L8</span>
+        <div>
+          <div class="brand-title">LayerEightIT</div>
+          <div class="brand-sub">Password Generator & Strength Meter</div>
         </div>
+      </a>
+    </header>
 
-        <div style="margin-top:12px">
-          <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
-          <div class="meta" id="strengthDesc" aria-live="polite">
-            <div><span class="score-label" id="scoreLabel">—</span></div>
-            <div id="crackLabel">Crack time: —</div>
+    <main class="card" aria-labelledby="title">
+      <h2 id="title" style="margin:0 0 6px 0">Password Generator and Strength Meter</h2>
+      <p class="small" style="margin:0 0 12px 0">A LayerEightIT tool — everything runs in your browser. Nothing is sent to any server.</p>
+
+      <div class="grid" role="region" aria-label="Password tool">
+        <section>
+          <div>
+            <label for="pw">Password</label>
+            <div class="pw-row">
+              <input id="pw" type="text" inputmode="text" aria-describedby="strengthDesc" autocomplete="off" placeholder="Type or generate a password" />
+              <button id="toggleShow" class="btn-ghost" aria-pressed="false" title="Show or hide password">Show</button>
+              <button id="copyBtn" class="btn" title="Copy password">Copy</button>
+            </div>
+
+            <div style="margin-top:12px">
+              <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
+              <div class="meta" id="strengthDesc" aria-live="polite">
+                <div><span class="score-label" id="scoreLabel">—</span></div>
+                <div id="crackLabel">Crack time: —</div>
+              </div>
+            </div>
+
+            <div class="tips">
+              <strong>Tip</strong> Use a passphrase of multiple random words for memorability, or a long random string for maximum security.
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="tips">
-          <strong>Tip</strong> Use a passphrase of multiple random words for memorability, or a long random string for maximum security.
-        </div>
+        <aside class="controls" aria-labelledby="generatorTitle">
+          <h3 id="generatorTitle" style="margin-top:0">Generator</h3>
+
+          <div class="row">
+            <label for="length" class="small">Length <span id="lenVal">16</span></label>
+            <input id="length" type="range" min="8" max="64" value="16" />
+          </div>
+
+          <div style="margin-bottom:8px">
+            <div class="toggle"><input id="lower" type="checkbox" checked /><label for="lower" class="small">Lowercase</label></div>
+            <div class="toggle"><input id="upper" type="checkbox" checked /><label for="upper" class="small">Uppercase</label></div>
+            <div class="toggle"><input id="numbers" type="checkbox" checked /><label for="numbers" class="small">Numbers</label></div>
+            <div class="toggle"><input id="symbols" type="checkbox" /><label for="symbols" class="small">Symbols</label></div>
+            <div class="toggle"><input id="avoidAmbiguous" type="checkbox" /><label for="avoidAmbiguous" class="small">Avoid ambiguous chars (0 O l 1)</label></div>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button id="generateBtn" class="btn">Generate</button>
+            <button id="regenBtn" class="btn-ghost">Regenerate</button>
+          </div>
+
+          <div class="footer">
+            <div class="engine-pill" id="engineLabel">zxcvbn (loading)</div>
+            <a id="returnLink" class="return-btn" href="https://LayerEightIT.com/Tools" target="_top" rel="noopener">Return To Website</a>
+          </div>
+        </aside>
       </div>
-    </section>
-
-    <aside class="controls" aria-labelledby="generatorTitle">
-      <h3 id="generatorTitle" style="margin-top:0">Generator</h3>
-
-      <div class="row">
-        <label for="length" class="small">Length <span id="lenVal">16</span></label>
-        <input id="length" type="range" min="8" max="64" value="16" />
-      </div>
-
-      <div style="margin-bottom:8px">
-        <div class="toggle"><input id="lower" type="checkbox" checked /><label for="lower" class="small">Lowercase</label></div>
-        <div class="toggle"><input id="upper" type="checkbox" checked /><label for="upper" class="small">Uppercase</label></div>
-        <div class="toggle"><input id="numbers" type="checkbox" checked /><label for="numbers" class="small">Numbers</label></div>
-        <div class="toggle"><input id="symbols" type="checkbox" /><label for="symbols" class="small">Symbols</label></div>
-        <div class="toggle"><input id="avoidAmbiguous" type="checkbox" /><label for="avoidAmbiguous" class="small">Avoid ambiguous chars (0 O l 1)</label></div>
-      </div>
-
-      <div style="display:flex;gap:8px">
-        <button id="generateBtn" class="btn">Generate</button>
-        <button id="regenBtn" class="btn-ghost">Regenerate</button>
-      </div>
-
-      <div class="footer">
-        <div style="margin-top:8px">Scoring engine: <span id="engineLabel">zxcvbn (loading)</span></div>
-      </div>
-    </aside>
+    </main>
   </div>
-</main>
 
 <script>
+/* LayerEightIT branded password tool
+   - zxcvbn lazy-load
+   - empty-state shows 0% bar and no labels
+   - "Return To Website" uses target _top so it breaks out of iframes
+*/
+
 const pwInput = document.getElementById('pw');
 const meterBar = document.getElementById('meterBar');
 const scoreLabel = document.getElementById('scoreLabel');
@@ -186,14 +259,14 @@ function humanTime(seconds){
 function evaluatePassword(){
   const pw = pwInput.value || '';
 
-  // Empty state
+  // Always handle empty input first
   if (!pw) {
     updateUI(-1, 0);
     engineLabel.textContent = zxcvbnLoaded ? 'zxcvbn' : 'fallback';
     return;
   }
 
-  // zxcvbn scoring
+  // Use zxcvbn if available
   if(zxcvbnLoaded && typeof window.zxcvbn === 'function'){
     try{
       const res = window.zxcvbn(pw);
@@ -203,8 +276,18 @@ function evaluatePassword(){
     }catch(e){}
   }
 
-  // Fallback scoring
-  updateUI(0, 1e6);
+  // Fallback: simple heuristic based on character classes and length
+  let score = 0;
+  if(pw.length >= 8) score++;
+  if(pw.length >= 12) score++;
+  if(/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if(/[0-9]/.test(pw)) score++;
+  if(/[^A-Za-z0-9]/.test(pw)) score++;
+
+  // Normalize to 0-4
+  score = Math.max(0, Math.min(4, score - 1));
+  const guesses = Math.pow(10, Math.min(12, pw.length)); // rough fallback
+  updateUI(score, guesses);
   engineLabel.textContent = 'fallback';
 }
 
@@ -227,6 +310,7 @@ function updateUI(score, guesses){
   crackLabel.textContent = 'Crack time: ' + humanTime(seconds);
 }
 
+/* UI wiring */
 pwInput.addEventListener('input', () => { evaluatePassword(); loadZxcvbn(); });
 pwInput.addEventListener('focus', loadZxcvbn);
 lengthRange.addEventListener('input', () => { lenVal.textContent = lengthRange.value; });
@@ -263,9 +347,11 @@ toggleShow.addEventListener('click', () => {
   const isShown = toggleShow.getAttribute('aria-pressed') === 'true';
   toggleShow.setAttribute('aria-pressed', String(!isShown));
   toggleShow.textContent = isShown ? 'Show' : 'Hide';
+  // keep visible text by default; if you prefer masked, change to 'password'
   pwInput.type = 'text';
 });
 
+/* Ensure initial empty state */
 evaluatePassword();
 </script>
 </body>
