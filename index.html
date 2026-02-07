@@ -193,6 +193,7 @@ function humanTime(seconds){
 function evaluatePassword(){
   const pw = pwInput.value || '';
 
+  // ⭐ FINAL FIX: Always handle empty input FIRST
   if (!pw) {
     updateUI(-1, 0, 0);
     engineLabel.textContent = zxcvbnLoaded ? 'zxcvbn' : 'entropy fallback';
@@ -202,10 +203,7 @@ function evaluatePassword(){
   if(zxcvbnLoaded && typeof window.zxcvbn === 'function'){
     try{
       const res = window.zxcvbn(pw);
-      const score = res.score;
-      const guesses = res.guesses;
-      const entropy = res.entropy;
-      updateUI(score, entropy, guesses);
+      updateUI(res.score, res.entropy, res.guesses);
       engineLabel.textContent = 'zxcvbn';
       return;
     }catch(e){}
@@ -216,7 +214,6 @@ function evaluatePassword(){
   if(/[A-Z]/.test(pw)) charsetSize += 26;
   if(/[0-9]/.test(pw)) charsetSize += 10;
   if(/[^A-Za-z0-9]/.test(pw)) charsetSize += 32;
-
   if(charsetSize === 0) charsetSize = 1;
 
   const bits = entropyBits(pw, charsetSize);
